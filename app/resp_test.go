@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"io"
+	"log/slog"
+	"strings"
 	"testing"
 )
 
@@ -16,7 +19,7 @@ func assertEqual(t *testing.T, actual, expected Command) {
 	}
 }
 
-func TestParser(t *testing.T) {
+func TestResp(t *testing.T) {
 	t.Helper()
 	tests := []struct {
 		input    string
@@ -38,7 +41,8 @@ func TestParser(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		command, err := Parse([]byte(test.input))
+		resp := NewResp(strings.NewReader(test.input), slog.New(slog.NewTextHandler(io.Discard, nil)))
+		command, err := resp.ReadCommand()
 		if err != nil {
 			t.Errorf("failed parsing test case %d", index+1)
 			t.Fatal(err)

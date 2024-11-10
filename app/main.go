@@ -7,8 +7,9 @@ import (
 )
 
 type application struct {
-	logger *slog.Logger
-	addr   net.Addr
+	logger      *slog.Logger
+	addr        net.Addr
+	maxBuffSize int
 }
 
 func main() {
@@ -21,8 +22,9 @@ func main() {
 	}
 
 	app := application{
-		logger: logger,
-		addr:   addr,
+		logger:      logger,
+		addr:        addr,
+		maxBuffSize: 1024,
 	}
 
 	if err := app.Serve(); err != nil {

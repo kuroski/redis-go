@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"os"
 )
@@ -31,23 +30,19 @@ func (app *application) Serve() error {
 
 func (app *application) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	buf := make([]byte, 1024)
 
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		n, err := conn.Read(buf)
+		resp := app.NewResp(conn)
+		cmd, err := resp.ReadCommand()
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
 			app.logger.Error(err.Error())
 			conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
 			continue
 		}
 
-		fmt.Println(n)
+		fmt.Println(cmd)
 
 		//command := buf[:n]
 		//n, resp := ReadNextResp(command)
@@ -66,8 +61,4 @@ func (app *application) handleConnection(conn net.Conn) {
 		//	os.Exit(1)
 		//}
 	}
-}
-
-func readCommands() {
-
 }
