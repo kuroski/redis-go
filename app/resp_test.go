@@ -25,7 +25,7 @@ func (c Command) Equal(other Command) bool {
 		}
 	}
 
-	return bytes.Equal(c.Name, other.Name)
+	return c.Name == other.Name
 }
 
 func assertEqual(t *testing.T, actual, expected Command) {
@@ -59,13 +59,13 @@ func TestCommand(t *testing.T) {
 		{
 			input: "+PING\r\n",
 			expected: &Command{
-				Name: []byte("PING"),
+				Name: "PING",
 			},
 		},
 		{
 			input: "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n",
 			expected: &Command{
-				Name: []byte("ECHO"),
+				Name: "ECHO",
 				Args: [][]byte{
 					[]byte("hey"),
 				},
