@@ -47,10 +47,8 @@ func (app *application) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		fmt.Println(n, err)
-
-		//command := buf[:n]
-		//resp, err := Parse(command)
+		command := buf[:n]
+		n, resp := ReadNextResp(command)
 		//if err != nil {
 		//	app.logger.Error(err.Error())
 		//	conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
