@@ -52,17 +52,14 @@ func (app *Application) handleConnection(conn net.Conn) {
 			_, err = conn.Write([]byte("+PONG\r\n"))
 			if err != nil {
 				app.logger.Error(err.Error())
-				return
 			}
 		case "echo":
 			_, err = conn.Write([]byte(fmt.Sprintf("+%s\r\n", cmd.Args[1])))
 			if err != nil {
 				app.logger.Error(err.Error())
-				return
 			}
 		default:
 			app.logger.Info(fmt.Sprintf("command not supported '%s'", cmd.Args))
-			return
 		}
 	}
 }
