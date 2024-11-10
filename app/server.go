@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/codecrafters-io/redis-starter-go/internal/models"
 	"net"
 	"os"
+	"strings"
 )
 
-func (app *application) Serve() error {
+func (app *Application) StartServer() error {
 	l, err := net.Listen(app.addr.Network(), app.addr.String())
 	if err != nil {
 		app.logger.Error("failed to bind to", "addr", app.addr)
@@ -14,11 +17,11 @@ func (app *application) Serve() error {
 	}
 
 	defer l.Close()
-
 	app.logger.Info("serving", "addr", app.addr.String())
 
 	for {
 		conn, err := l.Accept()
+		app.rd = NewReader(conn, app.maxBuffSize, app.logger)
 		if err != nil {
 			app.logger.Error("error accepting connection", "err", err.Error())
 			os.Exit(1)
@@ -28,38 +31,38 @@ func (app *application) Serve() error {
 	}
 }
 
-func (app *application) handleConnection(conn net.Conn) {
+func (app *Application) handleConnection(conn net.Conn) {
 	defer conn.Close()
-
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		resp := app.NewResp(conn)
-		cmd, err := resp.ReadCommand()
+		cmd, err := app.rd.ReadCommand()
 		if err != nil {
+			if errors.Is(err, models.ErrEOF) {
+				break
+			}
+
 			app.logger.Error(err.Error())
 			conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
 			continue
 		}
 
-		app.logger.Debug("Handle command", resp)
-
-		switch cmd.Name {
-		case "PING":
+		switch strings.ToLower(string(cmd.Args[0])) {
+		case "ping":
 			_, err = conn.Write([]byte("+PONG\r\n"))
 			if err != nil {
 				app.logger.Error(err.Error())
-				os.Exit(1)
+				return
 			}
-		case "ECHO":
-			_, err = conn.Write([]byte(fmt.Sprintf("+%s\r\n", cmd.Args)))
+		case "echo":
+			_, err = conn.Write([]byte(fmt.Sprintf("+%s\r\n", cmd.Args[1])))
 			if err != nil {
 				app.logger.Error(err.Error())
-				os.Exit(1)
+				return
 			}
 		default:
-			app.logger.Info(fmt.Sprintf("command not supported '%s'", cmd.Name))
-			os.Exit(1)
+			app.logger.Info(fmt.Sprintf("command not supported '%s'", cmd.Args))
+			return
 		}
 	}
 }

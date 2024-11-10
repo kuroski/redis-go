@@ -9,6 +9,7 @@ import (
 var (
 	ErrEmptyCommand             = errors.New("empty command")
 	ErrNotEnoughData            = errors.New("not enough data")
+	ErrEOF                      = errors.New("end of the file")
 	ErrMissingCRLFTerminator    = errors.New("missing CRLF terminator")
 	ErrParsingInvalidInteger    = errors.New("trying to parse invalid integer")
 	ErrInvalidBulkFormat        = errors.New("invalid bulk format")

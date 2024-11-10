@@ -8,46 +8,45 @@ import (
 	"testing"
 )
 
-func (c Command) Equal(other Command) bool {
-	if len(c.Args) != len(other.Args) {
+func (cmd *Command) Equal(other Command) bool {
+	if len(cmd.Args) != len(other.Args) {
 		return false
 	}
 
-	for i := range c.Args {
-		if len(c.Args[i]) != len(other.Args[i]) {
+	for i := range cmd.Args {
+		if len(cmd.Args[i]) != len(other.Args[i]) {
 			return false
 		}
 
-		for j := range c.Args[i] {
-			if c.Args[i][j] != other.Args[i][j] {
+		for j := range cmd.Args[i] {
+			if cmd.Args[i][j] != other.Args[i][j] {
 				return false
 			}
 		}
 	}
 
-	return c.Name == other.Name
+	return true
+}
+
+func (cmd *Command) String() string {
+	var bufferActual bytes.Buffer
+	for _, b := range cmd.Args {
+		bufferActual.Write(b)
+	}
+	return bufferActual.String()
 }
 
 func assertEqual(t *testing.T, actual, expected Command) {
 	t.Helper()
 	if !actual.Equal(expected) {
-		var bufferActual bytes.Buffer
-		for _, b := range actual.Args {
-			bufferActual.Write(b)
-		}
-
-		var bufferExpected bytes.Buffer
-		for _, b := range expected.Args {
-			bufferExpected.Write(b)
-		}
-		t.Errorf("got: '%v %v'; want: '%v %v'", string(actual.Name), bufferActual.String(), string(expected.Name), bufferExpected.String())
+		t.Errorf("got: '%v'; want: '%v'", actual, expected)
 	}
 }
 
-func TestCommand(t *testing.T) {
+func TestReadCommand(t *testing.T) {
 	t.Helper()
 
-	app := &application{
+	app := &Application{
 		logger:      slog.New(slog.NewTextHandler(io.Discard, nil)),
 		maxBuffSize: 1024,
 	}
@@ -59,14 +58,16 @@ func TestCommand(t *testing.T) {
 		{
 			input: "+PING\r\n",
 			expected: &Command{
-				Name: "PING",
+				Args: [][]byte{
+					[]byte("PING"),
+				},
 			},
 		},
 		{
 			input: "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n",
 			expected: &Command{
-				Name: "ECHO",
 				Args: [][]byte{
+					[]byte("ECHO"),
 					[]byte("hey"),
 				},
 			},
@@ -74,8 +75,8 @@ func TestCommand(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		resp := app.NewResp(strings.NewReader(test.input))
-		command, err := resp.ReadCommand()
+		rd := app.NewReader(strings.NewReader(test.input))
+		command, err := rd.ReadCommand()
 		if err != nil {
 			t.Errorf("failed parsing test case %d", index+1)
 			t.Fatal(err)

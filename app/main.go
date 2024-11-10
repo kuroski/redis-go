@@ -6,10 +6,11 @@ import (
 	"os"
 )
 
-type application struct {
+type Application struct {
 	logger      *slog.Logger
 	addr        net.Addr
 	maxBuffSize int
+	rd          *RespReader
 }
 
 func main() {
@@ -21,13 +22,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := application{
+	app := Application{
 		logger:      logger,
 		addr:        addr,
 		maxBuffSize: 1024,
 	}
 
-	if err := app.Serve(); err != nil {
+	if err := app.StartServer(); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
