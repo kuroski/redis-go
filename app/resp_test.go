@@ -40,7 +40,7 @@ func assertEqual(t *testing.T, actual, expected Command) {
 		for _, b := range expected.Args {
 			bufferExpected.Write(b)
 		}
-		t.Errorf("got: %v - %v; want: %v - %v", string(actual.Name), bufferActual.String(), string(expected.Name), bufferExpected.String())
+		t.Errorf("got: '%v %v'; want: '%v %v'", string(actual.Name), bufferActual.String(), string(expected.Name), bufferExpected.String())
 	}
 }
 
@@ -72,7 +72,9 @@ func TestCommand(t *testing.T) {
 			input: "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n",
 			expected: &Command{
 				Name: []byte("ECHO"),
-				Args: append([][]byte{}, []byte("hey")),
+				Args: [][]byte{
+					[]byte("hey"),
+				},
 			},
 		},
 	}

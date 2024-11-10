@@ -130,7 +130,7 @@ func (r *Resp) readBulk() (s []byte, n int, err error) {
 }
 
 func (r *Resp) readArray() (arr [][]byte, n int, err error) {
-	size, n, err := r.readInteger()
+	size, _, err := r.readInteger()
 	if err != nil {
 		r.logger.Error(err.Error())
 		return nil, 0, models.ErrInvalidArrayFormat
@@ -138,7 +138,6 @@ func (r *Resp) readArray() (arr [][]byte, n int, err error) {
 
 	arr = make([][]byte, size)
 
-	// *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 	for i := 0; i < size; i++ {
 		respType, err := r.reader.ReadByte()
 		if err != nil {
@@ -152,14 +151,14 @@ func (r *Resp) readArray() (arr [][]byte, n int, err error) {
 			if err != nil {
 				return nil, 0, err
 			}
-			arr = append(arr, s)
+			arr[i] = s
 			break
 		case Integer:
 			i, _, err := r.readInteger()
 			if err != nil {
 				return nil, 0, err
 			}
-			arr = append(arr, []byte(strconv.Itoa(i)))
+			arr[i] = []byte(strconv.Itoa(i))
 			break
 		case Bulk:
 			s, _, err := r.readBulk()
@@ -173,5 +172,5 @@ func (r *Resp) readArray() (arr [][]byte, n int, err error) {
 		}
 	}
 
-	return arr, n, nil
+	return arr, size, nil
 }
