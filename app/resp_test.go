@@ -21,6 +21,12 @@ func assertEqual(t *testing.T, actual, expected Command) {
 
 func TestResp(t *testing.T) {
 	t.Helper()
+
+	app := &application{
+		logger:      slog.New(slog.NewTextHandler(io.Discard, nil)),
+		maxBuffSize: 1024,
+	}
+
 	tests := []struct {
 		input    string
 		expected *Command
@@ -41,7 +47,7 @@ func TestResp(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		resp := NewResp(strings.NewReader(test.input), slog.New(slog.NewTextHandler(io.Discard, nil)))
+		resp := app.NewResp(strings.NewReader(test.input))
 		command, err := resp.ReadCommand()
 		if err != nil {
 			t.Errorf("failed parsing test case %d", index+1)
