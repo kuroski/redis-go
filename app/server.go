@@ -55,23 +55,4 @@ func (app *application) handleConnection(conn net.Conn) {
 			os.Exit(1)
 		}
 	}
-
-	//for {
-	//	rd := NewReader(conn)
-	//	resp, err := rd.Read()
-	//	if err != nil {
-	//		if err == io.EOF {
-	//			break
-	//		}
-	//		logger.Error(err.Error())
-	//		os.Exit(1)
-	//	}
-	//	fmt.Println(resp)
-	//
-	//	_, err = conn.Write([]byte("+PONG\r\n"))
-	//	if err != nil {
-	//		logger.Error(err.Error())
-	//		os.Exit(1)
-	//	}
-	//}
 }
