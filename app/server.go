@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log/slog"
 	"net"
 	"os"
@@ -22,17 +23,22 @@ func main() {
 	}
 	defer conn.Close()
 
-	buff := make([]byte, 128)
+	for {
+		buff := make([]byte, 1024)
 
-	_, err = conn.Read(buff)
-	if err != nil {
-		logger.Error("Error reading command: ", err.Error())
-		os.Exit(1)
-	}
+		_, err = conn.Read(buff)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			logger.Error("Error reading from the client ", err.Error())
+			os.Exit(1)
+		}
 
-	_, err = conn.Write([]byte("+PONG\r\n"))
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		_, err = conn.Write([]byte("+PONG\r\n"))
+		if err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 }
