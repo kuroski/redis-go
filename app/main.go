@@ -10,7 +10,6 @@ type Application struct {
 	logger      *slog.Logger
 	addr        net.Addr
 	maxBuffSize int
-	rd          *RespReader
 }
 
 func main() {

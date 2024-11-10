@@ -21,7 +21,6 @@ func (app *Application) StartServer() error {
 
 	for {
 		conn, err := l.Accept()
-		app.rd = NewReader(conn, app.maxBuffSize, app.logger)
 		if err != nil {
 			app.logger.Error("error accepting connection", "err", err.Error())
 			os.Exit(1)
@@ -36,7 +35,8 @@ func (app *Application) handleConnection(conn net.Conn) {
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		cmd, err := app.rd.ReadCommand()
+		rd := NewReader(conn, app.maxBuffSize, app.logger)
+		cmd, err := rd.ReadCommand()
 		if err != nil {
 			if errors.Is(err, models.ErrEOF) {
 				break
