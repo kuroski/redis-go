@@ -8,19 +8,19 @@ import (
 	"strings"
 )
 
-type CommandHandler func(conn net.Conn, cmd resp.Command)
+type Handler func(conn net.Conn, cmd resp.Command)
 
 type ServeMux struct {
-	handlers map[string]CommandHandler
+	handlers map[string]Handler
 }
 
 func NewServeMux() *ServeMux {
 	return &ServeMux{
-		handlers: make(map[string]CommandHandler),
+		handlers: make(map[string]Handler),
 	}
 }
 
-func (mux *ServeMux) HandleFunc(command string, handler CommandHandler) {
+func (mux *ServeMux) HandleFunc(command string, handler Handler) {
 	if handler == nil {
 		panic("redcon: nil handler")
 	}

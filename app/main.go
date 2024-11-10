@@ -38,7 +38,7 @@ func main() {
 	}
 }
 
-func (app *application) startServer(handler server.CommandHandler) error {
+func (app *application) startServer(handler server.Handler) error {
 	l, err := net.Listen(app.addr.Network(), app.addr.String())
 	if err != nil {
 		app.logger.Error("failed to bind to", "addr", app.addr)
@@ -59,7 +59,7 @@ func (app *application) startServer(handler server.CommandHandler) error {
 	}
 }
 
-func (app *application) handleConnection(conn net.Conn, handler server.CommandHandler) {
+func (app *application) handleConnection(conn net.Conn, handler server.Handler) {
 	defer conn.Close()
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
