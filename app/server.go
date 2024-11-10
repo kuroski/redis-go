@@ -1,47 +1,77 @@
 package main
 
 import (
+	"bufio"
 	"io"
-	"log/slog"
 	"net"
 	"os"
 )
 
-func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
-
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+func (app *application) serve() error {
+	l, err := net.Listen(app.addr.Network(), app.addr.String())
 	if err != nil {
-		logger.Error("Failed to bind to port 6379")
+		app.logger.Error("failed to bind to", "addr", app.addr)
 		os.Exit(1)
 	}
+
+	defer l.Close()
+
+	app.logger.Info("serving", "addr", app.addr.String())
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			logger.Error("Error accepting connection: ", err.Error())
+			app.logger.Error("error accepting connection", err.Error())
 			os.Exit(1)
 		}
 
-		go func() {
-			for {
-				buff := make([]byte, 1024)
+		go app.handleConnection(conn)
+	}
+}
 
-				_, err = conn.Read(buff)
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					logger.Error("Error reading from the client ", err.Error())
-					os.Exit(1)
-				}
-				_, err = conn.Write([]byte("+PONG\r\n"))
-				if err != nil {
-					logger.Error(err.Error())
-					os.Exit(1)
-				}
+func (app *application) handleConnection(conn net.Conn) {
+	defer conn.Close()
+	reader := bufio.NewReader(conn)
+
+	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
+
+	for {
+		resp, err := Parse(reader)
+		if err != nil {
+			if err == io.EOF {
+				break
 			}
 
-		}()
+			app.logger.Error(err.Error())
+			conn.Write([]byte("-ERR internal error\r\n"))
+			continue
+		}
+
+		app.logger.Debug("Handle command", resp)
+
+		_, err = conn.Write([]byte("+PONG\r\n"))
+		if err != nil {
+			app.logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
+
+	//for {
+	//	rd := NewReader(conn)
+	//	resp, err := rd.Read()
+	//	if err != nil {
+	//		if err == io.EOF {
+	//			break
+	//		}
+	//		logger.Error(err.Error())
+	//		os.Exit(1)
+	//	}
+	//	fmt.Println(resp)
+	//
+	//	_, err = conn.Write([]byte("+PONG\r\n"))
+	//	if err != nil {
+	//		logger.Error(err.Error())
+	//		os.Exit(1)
+	//	}
+	//}
 }
