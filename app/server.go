@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/codecrafters-io/redis-starter-go/internal/models"
+	"github.com/codecrafters-io/redis-starter-go/pkg/resp"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -35,10 +36,10 @@ func (app *Application) handleConnection(conn net.Conn) {
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		rd := app.NewReader(conn)
+		rd := resp.NewReader(conn, app.maxBuffSize)
 		cmd, err := rd.ReadCommand()
 		if err != nil {
-			if errors.Is(err, models.ErrEOF) {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 

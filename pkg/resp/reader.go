@@ -1,4 +1,4 @@
-package main
+package resp
 
 import (
 	"bufio"
@@ -6,6 +6,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/internal/models"
 	"io"
 	"log/slog"
+	"os"
 	"strconv"
 )
 
@@ -13,25 +14,25 @@ type Command struct {
 	Args [][]byte
 }
 
-type RespReader struct {
+type Reader struct {
 	rd     *bufio.Reader
 	buf    []byte
 	logger *slog.Logger
 }
 
-func (app *Application) NewReader(rd io.Reader) *RespReader {
-	return &RespReader{
+func NewReader(rd io.Reader, maxBuffSize int) *Reader {
+	return &Reader{
 		rd:     bufio.NewReader(rd),
-		buf:    make([]byte, app.maxBuffSize),
-		logger: app.logger,
+		buf:    make([]byte, maxBuffSize),
+		logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{})),
 	}
 }
 
-func (rd *RespReader) ReadCommand() (cmd Command, err error) {
+func (rd *Reader) ReadCommand() (cmd Command, err error) {
 	respType, err := rd.rd.ReadByte()
 	if err != nil {
 		rd.logger.Error(err.Error())
-		return Command{}, models.ErrEOF
+		return Command{}, err
 	}
 
 	switch respType {
@@ -40,16 +41,13 @@ func (rd *RespReader) ReadCommand() (cmd Command, err error) {
 		if err != nil {
 			return Command{}, err
 		}
-
 		cmd.Args = append(cmd.Args, s)
-		break
 	case Bulk: // "$4\r\nECHO\r\n"
 		s, _, err := rd.parseBulk()
 		if err != nil {
 			return Command{}, err
 		}
 		cmd.Args = append(cmd.Args, s)
-		break
 	case Array: // *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 		arr, n, err := rd.parseArray()
 		if err != nil {
@@ -60,7 +58,6 @@ func (rd *RespReader) ReadCommand() (cmd Command, err error) {
 			return Command{}, models.ErrEmptyCommand
 		}
 		cmd.Args = append(cmd.Args, arr...)
-		break
 	default:
 		return Command{}, models.ErrInvalidDataType.WithArgs(slog.String("respType", string(respType)))
 	}
@@ -68,7 +65,7 @@ func (rd *RespReader) ReadCommand() (cmd Command, err error) {
 	return cmd, nil
 }
 
-func (rd *RespReader) parseLine() (line []byte, n int, err error) {
+func (rd *Reader) parseLine() (line []byte, n int, err error) {
 	line, err = rd.rd.ReadBytes('\n')
 	if err != nil {
 		return nil, 0, models.ErrMissingCRLFTerminator
@@ -82,7 +79,7 @@ func (rd *RespReader) parseLine() (line []byte, n int, err error) {
 	return line, len(line), nil
 }
 
-func (rd *RespReader) parseString() (s []byte, n int, err error) {
+func (rd *Reader) parseString() (s []byte, n int, err error) {
 	line, n, err := rd.parseLine()
 	if err != nil {
 		return nil, 0, err
@@ -91,7 +88,7 @@ func (rd *RespReader) parseString() (s []byte, n int, err error) {
 	return line, n, nil
 }
 
-func (rd *RespReader) parseInteger() (v int, n int, err error) {
+func (rd *Reader) parseInteger() (v int, n int, err error) {
 	line, n, err := rd.parseLine()
 	if err != nil {
 		return 0, 0, err
@@ -105,7 +102,7 @@ func (rd *RespReader) parseInteger() (v int, n int, err error) {
 	return int(i64), n, nil
 }
 
-func (rd *RespReader) parseBulk() (s []byte, n int, err error) {
+func (rd *Reader) parseBulk() (s []byte, n int, err error) {
 	size, n, err := rd.parseInteger()
 	if err != nil {
 		rd.logger.Error(err.Error())
@@ -120,13 +117,17 @@ func (rd *RespReader) parseBulk() (s []byte, n int, err error) {
 
 	rem, n, err := rd.parseLine()
 	if err != nil || n != 0 {
-		return nil, 0, models.ErrBulkSizeDiffersFromValue.WithArgs(slog.Int("size", size), slog.String("bulk", string(bulk)), slog.String("remaining", string(rem)))
+		return nil, 0, models.ErrBulkSizeDiffersFromValue.WithArgs(
+			slog.Int("size", size),
+			slog.String("bulk", string(bulk)),
+			slog.String("remaining", string(rem)),
+		)
 	}
 
 	return bulk, n, nil
 }
 
-func (rd *RespReader) parseArray() (arr [][]byte, n int, err error) {
+func (rd *Reader) parseArray() (arr [][]byte, n int, err error) {
 	size, _, err := rd.parseInteger()
 	if err != nil {
 		rd.logger.Error(err.Error())

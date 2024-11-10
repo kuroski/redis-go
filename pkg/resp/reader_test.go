@@ -1,9 +1,7 @@
-package main
+package resp
 
 import (
 	"bytes"
-	"io"
-	"log/slog"
 	"strings"
 	"testing"
 )
@@ -46,11 +44,6 @@ func assertEqual(t *testing.T, actual, expected Command) {
 func TestReadCommand(t *testing.T) {
 	t.Helper()
 
-	app := &Application{
-		logger:      slog.New(slog.NewTextHandler(io.Discard, nil)),
-		maxBuffSize: 1024,
-	}
-
 	tests := []struct {
 		input    string
 		expected *Command
@@ -75,7 +68,7 @@ func TestReadCommand(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		rd := app.NewReader(strings.NewReader(test.input))
+		rd := NewReader(strings.NewReader(test.input), 1024)
 		command, err := rd.ReadCommand()
 		if err != nil {
 			t.Errorf("failed parsing test case %d", index+1)
