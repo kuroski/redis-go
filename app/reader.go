@@ -19,11 +19,11 @@ type RespReader struct {
 	logger *slog.Logger
 }
 
-func NewReader(rd io.Reader, maxBuffSize int, logger *slog.Logger) *RespReader {
+func (app *Application) NewReader(rd io.Reader) *RespReader {
 	return &RespReader{
 		rd:     bufio.NewReader(rd),
-		buf:    make([]byte, maxBuffSize),
-		logger: logger,
+		buf:    make([]byte, app.maxBuffSize),
+		logger: app.logger,
 	}
 }
 

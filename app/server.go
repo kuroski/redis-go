@@ -35,7 +35,7 @@ func (app *Application) handleConnection(conn net.Conn) {
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		rd := NewReader(conn, app.maxBuffSize, app.logger)
+		rd := app.NewReader(conn)
 		cmd, err := rd.ReadCommand()
 		if err != nil {
 			if errors.Is(err, models.ErrEOF) {
