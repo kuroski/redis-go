@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -43,7 +44,7 @@ func (app *application) handleConnection(conn net.Conn) {
 			}
 
 			app.logger.Error(err.Error())
-			conn.Write([]byte("-ERR internal error\r\n"))
+			conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
 			continue
 		}
 

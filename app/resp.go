@@ -3,14 +3,16 @@ package main
 import (
 	"bufio"
 	"errors"
-	"strconv"
 )
 
 type Type byte
 
 const (
-	String = '+'
-	Bulk   = '$'
+	String  = '+'
+	Error   = '-'
+	Integer = ':'
+	Bulk    = '$'
+	Array   = '*'
 )
 
 type Resp struct {
@@ -46,37 +48,31 @@ func Parse(reader *bufio.Reader) (*Resp, error) {
 	}
 
 	switch resp.Type {
-	case String, Bulk:
+	//case String, Error, Integer, Bulk, Array:
+	case String, Error:
+		break
+	case Integer:
+		if len(resp.Data) == 0 {
+			return nil, errors.New("invalid integer")
+		}
+
+		var i int
+		if resp.Data[0] == '-' {
+			if len(resp.Data) == 1 {
+				return nil, errors.New("invalid negative integer")
+			}
+			i++
+		}
+
+		for ; i < len(resp.Data); i++ {
+			if resp.Data[i] < '0' || resp.Data[i] > '9' {
+				return nil, errors.New("invalid integer")
+			}
+		}
+		break
 	default:
 		return nil, errors.New("invalid kind")
 	}
 
-	resp.Count, err = strconv.Atoi(string(resp.Data))
-	if resp.Type == Bulk {
-		if err != nil {
-			return nil, errors.New("invalid number of bytes")
-		}
-	}
-
 	return resp, nil
 }
-
-/*
-func (r *Resp) Read() (Value, error) {
-	_type, err := r.reader.ReadByte()
-
-	if err != nil {
-		return Value{}, err
-	}
-
-	switch _type {
-	case ARRAY:
-		return r.readArray()
-	case BULK:
-		return r.readBulk()
-	default:
-		fmt.Printf("Unknown type: %v", string(_type))
-		return Value{}, nil
-	}
-}
-*/
