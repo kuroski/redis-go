@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type errProtocol struct {
@@ -50,9 +51,23 @@ func Parse(b []byte) (command Command, err error) {
 	respType := b[0]
 	data := b[1 : size-2]
 
+	// "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n"
 	switch respType {
 	case String, Error:
 		command.Name = data
+		break
+	case Array:
+		var argCount strings.Builder
+		for i, p := range data {
+			if p == '\r' && data[i+1] == '\n' {
+				fmt.Println("FOUND ARRAY COUNT")
+				break
+			} else {
+				argCount.WriteByte(p)
+			}
+		}
+		fmt.Println("======== ARG COUNT ========")
+		fmt.Println(argCount.String())
 		break
 	default:
 		return Command{}, errInvalidDataType.withArgs([]byte{respType})

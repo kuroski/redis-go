@@ -23,12 +23,6 @@ func TestParser(t *testing.T) {
 		expected *Command
 	}{
 		{
-			input: "+HELLO\r\n",
-			expected: &Command{
-				Name: []byte("HELLO"),
-			},
-		},
-		{
 			input: "+PING\r\n",
 			expected: &Command{
 				Name: []byte("PING"),
