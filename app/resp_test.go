@@ -19,7 +19,7 @@ func assertEqual(t *testing.T, actual, expected Command) {
 	}
 }
 
-func TestResp(t *testing.T) {
+func TestCommand(t *testing.T) {
 	t.Helper()
 
 	app := &application{
@@ -35,6 +35,12 @@ func TestResp(t *testing.T) {
 			input: "+PING\r\n",
 			expected: &Command{
 				Name: []byte("PING"),
+			},
+		},
+		{
+			input: "$4\r\nECHO\r\n",
+			expected: &Command{
+				Name: []byte("ECHO"),
 			},
 		},
 		{
