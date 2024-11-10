@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net"
 	"os"
 )
 
-func (app *application) serve() error {
+func (app *application) Serve() error {
 	l, err := net.Listen(app.addr.Network(), app.addr.String())
 	if err != nil {
 		app.logger.Error("failed to bind to", "addr", app.addr)
@@ -22,7 +21,7 @@ func (app *application) serve() error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			app.logger.Error("error accepting connection", err.Error())
+			app.logger.Error("error accepting connection", "err", err.Error())
 			os.Exit(1)
 		}
 
@@ -32,12 +31,12 @@ func (app *application) serve() error {
 
 func (app *application) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	reader := bufio.NewReader(conn)
+	buf := make([]byte, 1024)
 
 	app.logger.Info("accepted connection from", "addr", conn.RemoteAddr())
 
 	for {
-		resp, err := Parse(reader)
+		n, err := conn.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -48,12 +47,27 @@ func (app *application) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		app.logger.Debug("Handle command", resp)
+		fmt.Println(n, err)
 
-		_, err = conn.Write([]byte("+PONG\r\n"))
-		if err != nil {
-			app.logger.Error(err.Error())
-			os.Exit(1)
-		}
+		//command := buf[:n]
+		//resp, err := Parse(command)
+		//if err != nil {
+		//	app.logger.Error(err.Error())
+		//	conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
+		//	continue
+		//}
+		//
+		//// TODO: Handle Writer later
+		//app.logger.Debug("Handle command", resp)
+		//
+		//_, err = conn.Write([]byte("+PONG\r\n"))
+		//if err != nil {
+		//	app.logger.Error(err.Error())
+		//	os.Exit(1)
+		//}
 	}
+}
+
+func readCommands() {
+
 }

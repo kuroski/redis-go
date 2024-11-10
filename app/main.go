@@ -25,7 +25,7 @@ func main() {
 		addr:   addr,
 	}
 
-	if err := app.serve(); err != nil {
+	if err := app.Serve(); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
