@@ -16,29 +16,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err := l.Accept()
-	if err != nil {
-		logger.Error("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
-	defer conn.Close()
-
 	for {
-		buff := make([]byte, 1024)
-
-		_, err = conn.Read(buff)
+		conn, err := l.Accept()
 		if err != nil {
-			if err == io.EOF {
-				break
+			logger.Error("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+
+		go func() {
+			for {
+				buff := make([]byte, 1024)
+
+				_, err = conn.Read(buff)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					logger.Error("Error reading from the client ", err.Error())
+					os.Exit(1)
+				}
+				_, err = conn.Write([]byte("+PONG\r\n"))
+				if err != nil {
+					logger.Error(err.Error())
+					os.Exit(1)
+				}
 			}
-			logger.Error("Error reading from the client ", err.Error())
-			os.Exit(1)
-		}
 
-		_, err = conn.Write([]byte("+PONG\r\n"))
-		if err != nil {
-			logger.Error(err.Error())
-			os.Exit(1)
-		}
+		}()
 	}
 }
