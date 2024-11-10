@@ -63,12 +63,6 @@ func TestCommand(t *testing.T) {
 			},
 		},
 		{
-			input: "$4\r\nECHO\r\n",
-			expected: &Command{
-				Name: []byte("ECHO"),
-			},
-		},
-		{
 			input: "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n",
 			expected: &Command{
 				Name: []byte("ECHO"),

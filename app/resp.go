@@ -10,7 +10,7 @@ import (
 )
 
 type Command struct {
-	Name []byte
+	Name string
 	Args [][]byte
 }
 
@@ -34,6 +34,8 @@ const (
 	Array   = '*'
 )
 
+// Reader
+
 func (r *Resp) ReadCommand() (command Command, err error) {
 	respType, err := r.reader.ReadByte()
 	if err != nil {
@@ -47,21 +49,25 @@ func (r *Resp) ReadCommand() (command Command, err error) {
 		if err != nil {
 			return Command{}, err
 		}
-		command.Name = s
+		command.Name = string(s)
 		break
 	case Bulk: // "$4\r\nECHO\r\n"
 		s, _, err := r.readBulk()
 		if err != nil {
 			return Command{}, err
 		}
-		command.Name = s
+		command.Name = string(s)
 		break
 	case Array: // *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 		arr, n, err := r.readArray()
 		if err != nil {
 			return Command{}, err
 		}
-		command.Name = arr[0]
+
+		if n == 0 {
+			return Command{}, models.ErrEmptyCommand
+		}
+		command.Name = string(arr[0])
 		command.Args = arr[1:n]
 		break
 	default:
@@ -146,7 +152,7 @@ func (r *Resp) readArray() (arr [][]byte, n int, err error) {
 		}
 
 		switch respType {
-		case String, Error: // "+PING\r\n"
+		case String, Error:
 			s, _, err := r.readString()
 			if err != nil {
 				return nil, 0, err

@@ -42,23 +42,24 @@ func (app *application) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		fmt.Println(cmd)
+		app.logger.Debug("Handle command", resp)
 
-		//command := buf[:n]
-		//n, resp := ReadNextResp(command)
-		//if err != nil {
-		//	app.logger.Error(err.Error())
-		//	conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
-		//	continue
-		//}
-		//
-		//// TODO: Handle Writer later
-		//app.logger.Debug("Handle command", resp)
-		//
-		//_, err = conn.Write([]byte("+PONG\r\n"))
-		//if err != nil {
-		//	app.logger.Error(err.Error())
-		//	os.Exit(1)
-		//}
+		switch cmd.Name {
+		case "PING":
+			_, err = conn.Write([]byte("+PONG\r\n"))
+			if err != nil {
+				app.logger.Error(err.Error())
+				os.Exit(1)
+			}
+		case "ECHO":
+			_, err = conn.Write([]byte(fmt.Sprintf("+%s\r\n", cmd.Args)))
+			if err != nil {
+				app.logger.Error(err.Error())
+				os.Exit(1)
+			}
+		default:
+			app.logger.Info(fmt.Sprintf("command not supported '%s'", cmd.Name))
+			os.Exit(1)
+		}
 	}
 }

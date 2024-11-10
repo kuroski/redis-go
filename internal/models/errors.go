@@ -7,14 +7,14 @@ import (
 )
 
 var (
-	ErrNotEnoughData             = errors.New("not enough data")
-	ErrMissingCRLFTerminator     = errors.New("missing CRLF terminator")
-	ErrParsingInvalidInteger     = errors.New("trying to parse invalid integer")
-	ErrInvalidBulkFormat         = errors.New("invalid bulk format")
-	ErrInvalidArrayFormat        = errors.New("invalid array format")
-	ErrBulkSizeDiffersFromValue  = &ErrProtocol{msg: "bulk size is different from the actual value"}
-	ErrArraySizeDiffersFromValue = &ErrProtocol{msg: "array size is different from the actual value"}
-	ErrInvalidDataType           = &ErrProtocol{msg: "invalid data type"}
+	ErrEmptyCommand             = errors.New("empty command")
+	ErrNotEnoughData            = errors.New("not enough data")
+	ErrMissingCRLFTerminator    = errors.New("missing CRLF terminator")
+	ErrParsingInvalidInteger    = errors.New("trying to parse invalid integer")
+	ErrInvalidBulkFormat        = errors.New("invalid bulk format")
+	ErrInvalidArrayFormat       = errors.New("invalid array format")
+	ErrBulkSizeDiffersFromValue = &ErrProtocol{msg: "bulk size is different from the actual value"}
+	ErrInvalidDataType          = &ErrProtocol{msg: "invalid data type"}
 )
 
 type ErrProtocol struct {
