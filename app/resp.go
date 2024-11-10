@@ -11,7 +11,7 @@ import (
 
 type Command struct {
 	Name []byte
-	Args []byte
+	Args [][]byte
 }
 
 type Resp struct {
@@ -56,25 +56,14 @@ func (r *Resp) ReadCommand() (command Command, err error) {
 		}
 		command.Name = s
 		break
-	//case Array:
-	//	arr, _, err := r.readArray()
-	//	if err != nil {
-	//		return Command{}, models.ErrInvalidStringFormat
-	//	}
-	//	command.Name = s
-	//	break
-	//	//var argCount strings.Builder
-	//	//for i, p := range data {
-	//	//	if p == '\r' && data[i+1] == '\n' {
-	//	//		fmt.Println("FOUND ARRAY COUNT")
-	//	//		break
-	//	//	} else {
-	//	//		argCount.WriteByte(p)
-	//	//	}
-	//	//}
-	//	//fmt.Println("======== ARG COUNT ========")
-	//	//fmt.Println(argCount.String())
-	//	break
+	case Array: // *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
+		arr, n, err := r.readArray()
+		if err != nil {
+			return Command{}, err
+		}
+		command.Name = arr[0]
+		command.Args = arr[1:n]
+		break
 	default:
 		return Command{}, models.ErrInvalidDataType.WithArgs(slog.String("respType", string(respType)))
 	}
@@ -138,4 +127,51 @@ func (r *Resp) readBulk() (s []byte, n int, err error) {
 	}
 
 	return bulk, n, nil
+}
+
+func (r *Resp) readArray() (arr [][]byte, n int, err error) {
+	size, n, err := r.readInteger()
+	if err != nil {
+		r.logger.Error(err.Error())
+		return nil, 0, models.ErrInvalidArrayFormat
+	}
+
+	arr = make([][]byte, size)
+
+	// *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
+	for i := 0; i < size; i++ {
+		respType, err := r.reader.ReadByte()
+		if err != nil {
+			r.logger.Error(err.Error())
+			return nil, 0, models.ErrNotEnoughData
+		}
+
+		switch respType {
+		case String, Error: // "+PING\r\n"
+			s, _, err := r.readString()
+			if err != nil {
+				return nil, 0, err
+			}
+			arr = append(arr, s)
+			break
+		case Integer:
+			i, _, err := r.readInteger()
+			if err != nil {
+				return nil, 0, err
+			}
+			arr = append(arr, []byte(strconv.Itoa(i)))
+			break
+		case Bulk:
+			s, _, err := r.readBulk()
+			if err != nil {
+				return nil, 0, err
+			}
+			arr[i] = s
+			break
+		default:
+			return nil, 0, models.ErrInvalidDataType.WithArgs(slog.String("respType", string(respType)))
+		}
+	}
+
+	return arr, n, nil
 }
