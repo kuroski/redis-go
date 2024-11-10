@@ -22,7 +22,7 @@ func NewServeMux() *ServeMux {
 
 func (mux *ServeMux) HandleFunc(command string, handler Handler) {
 	if handler == nil {
-		panic("redcon: nil handler")
+		panic("nil handler")
 	}
 	mux.handlers[strings.ToLower(command)] = handler
 }

@@ -68,7 +68,7 @@ func (app *application) handleConnection(conn net.Conn, handler server.Handler) 
 		cmd, err := rd.ReadCommand()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				break
+				break // close connection, otherwise it will enter on an infinite loop
 			}
 
 			app.logger.Error(err.Error())

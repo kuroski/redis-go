@@ -9,6 +9,8 @@ func (app *application) routes() server.Handler {
 	mux := server.NewServeMux()
 	mux.HandleFunc("ping", handler.ping)
 	mux.HandleFunc("echo", handler.echo)
+	mux.HandleFunc("get", handler.get)
+	mux.HandleFunc("set", handler.set)
 
 	return mux.ServeRESP
 }
