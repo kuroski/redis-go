@@ -47,8 +47,10 @@ func (app *application) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		command := buf[:n]
-		n, resp := ReadNextResp(command)
+		fmt.Println(n)
+
+		//command := buf[:n]
+		//n, resp := ReadNextResp(command)
 		//if err != nil {
 		//	app.logger.Error(err.Error())
 		//	conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err.Error())))
